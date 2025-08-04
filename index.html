@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie Interactive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .filter-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .filter-btn.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .item-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover .item-overlay {
+            transform: translateY(0);
+        }
+
+        .category-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .item-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Lightbox Styles */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .lightbox.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            overflow: hidden;
+            transform: scale(0.7);
+            transition: transform 0.3s ease;
+        }
+
+        .lightbox.active .lightbox-content {
+            transform: scale(1);
+        }
+
+        .lightbox img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            max-height: 80vh;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .gallery-counter {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .gallery-item {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .gallery-item.hidden {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .filter-btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Galerie Interactive</h1>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">Tous</button>
+            <button class="filter-btn" data-filter="nature">Nature</button>
+            <button class="filter-btn" data-filter="people">Personnes</button>
+            <button class="filter-btn" data-filter="abstract">Abstrait</button>
+            <button class="filter-btn" data-filter="architecture">Architecture</button>
+        </div>
+
+        <div class="gallery">
+            <!-- Nature Images -->
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop" alt="Montagne">
+                <div class="item-overlay">
+                    <div class="category-tag">Nature</div>
+                    <div class="item-title">Montagne majestueuse</div>
+                    <div class="item-description">Paysage de montagne au coucher du soleil</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop" alt="Forêt">
+                <div class="item-overlay">
+                    <div class="category-tag">Nature</div>
+                    <div class="item-title">Forêt mystérieuse</div>
+                    <div class="item-description">Sentier dans une forêt dense</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="nature">
+                <img src="https://images.unsplash.com/photo-1544198365-f5d60b6d8190?w=400&h=300&fit=crop" alt="Océan">
+                <div class="item-overlay">
+                    <div class="category-tag">Nature</div>
+                    <div class="item-title">Océan infini</div>
+                    <div class="item-description">Vagues sur la côte rocheuse</div>
+                </div>
+            </div>
+
+            <!-- People Images -->
+            <div class="gallery-item" data-category="people">
+                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&h=300&fit=crop" alt="Portrait">
+                <div class="item-overlay">
+                    <div class="category-tag">Personnes</div>
+                    <div class="item-title">Portrait artistique</div>
+                    <div class="item-description">Expression et émotion captées</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="people">
+                <img src="https://images.unsplash.com/photo-1521119989659-a83eee488004?w=400&h=300&fit=crop" alt="Groupe">
+                <div class="item-overlay">
+                    <div class="category-tag">Personnes</div>
+                    <div class="item-title">Moment partagé</div>
+                    <div class="item-description">Amis profitant d'un coucher de soleil</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="people">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop" alt="Enfant">
+                <div class="item-overlay">
+                    <div class="category-tag">Personnes</div>
+                    <div class="item-title">Innocence</div>
+                    <div class="item-description">La joie de l'enfance</div>
+                </div>
+            </div>
+
+            <!-- Abstract Images -->
+            <div class="gallery-item" data-category="abstract">
+                <img src="https://images.unsplash.com/photo-1549317336-206569e8475c?w=400&h=300&fit=crop" alt="Abstrait coloré">
+                <div class="item-overlay">
+                    <div class="category-tag">Abstrait</div>
+                    <div class="item-title">Explosion de couleurs</div>
+                    <div class="item-description">Mélange vibrant de teintes</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="abstract">
+                <img src="https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400&h=300&fit=crop" alt="Formes géométriques">
+                <div class="item-overlay">
+                    <div class="category-tag">Abstrait</div>
+                    <div class="item-title">Géométrie moderne</div>
+                    <div class="item-description">Formes et lignes épurées</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="abstract">
+                <img src="https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=400&h=300&fit=crop" alt="Texture abstraite">
+                <div class="item-overlay">
+                    <div class="category-tag">Abstrait</div>
+                    <div class="item-title">Texture fluide</div>
+                    <div class="item-description">Mouvement et fluidité</div>
+                </div>
+            </div>
+
+            <!-- Architecture Images -->
+            <div class="gallery-item" data-category="architecture">
+                <img src="https://images.unsplash.com/photo-1486718448742-163732cd1544?w=400&h=300&fit=crop" alt="Gratte-ciel">
+                <div class="item-overlay">
+                    <div class="category-tag">Architecture</div>
+                    <div class="item-title">Gratte-ciel moderne</div>
+                    <div class="item-description">Architecture contemporaine urbaine</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="architecture">
+                <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop" alt="Architecture classique">
+                <div class="item-overlay">
+                    <div class="category-tag">Architecture</div>
+                    <div class="item-title">Élégance classique</div>
+                    <div class="item-description">Colonnes et symétrie parfaite</div>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="architecture">
+                <img src="https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=400&h=300&fit=crop" alt="Architecture futuriste">
+                <div class="item-overlay">
+                    <div class="category-tag">Architecture</div>
+                    <div class="item-title">Vision futuriste</div>
+                    <div class="item-description">Design avant-gardiste</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-counter">
+            <span id="imageCount">12</span> images affichées
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content">
+            <img src="" alt="" id="lightboxImage">
+            <div class="lightbox-close" id="lightboxClose">&times;</div>
+        </div>
+    </div>
+
+    <script>
+        // Filtrage des images
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const galleryItems = document.querySelectorAll('.gallery-item');
+        const imageCounter = document.getElementById('imageCount');
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Retirer la classe active de tous les boutons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Ajouter la classe active au bouton cliqué
+                button.classList.add('active');
+                
+                const filter = button.dataset.filter;
+                let visibleCount = 0;
+                
+                galleryItems.forEach(item => {
+                    if (filter === 'all' || item.dataset.category === filter) {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                // Mettre à jour le compteur
+                imageCounter.textContent = visibleCount;
+            });
+        });
+
+        // Lightbox functionality
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxClose = document.getElementById('lightboxClose');
+
+        // Ouvrir la lightbox en cliquant sur une image
+        galleryItems.forEach(item => {
+            const img = item.querySelector('img');
+            const title = item.querySelector('.item-title').textContent;
+            
+            img.addEventListener('click', () => {
+                lightboxImage.src = img.src;
+                lightboxImage.alt = title;
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Empêcher le scroll
+            });
+        });
+
+        // Fermer la lightbox
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = 'auto'; // Restaurer le scroll
+        }
+
+        lightboxClose.addEventListener('click', closeLightbox);
+
+        // Fermer en cliquant en dehors de l'image
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Fermer avec la touche Échap
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightbox();
+            }
+        });
+
+        // Animation d'entrée pour les éléments de la galerie
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationDelay = Math.random() * 0.5 + 's';
+                }
+            });
+        }, observerOptions);
+
+        galleryItems.forEach(item => {
+            observer.observe(item);
+        });
+    </script>
+</body>
+</html>
